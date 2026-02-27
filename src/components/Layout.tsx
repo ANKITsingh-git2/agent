@@ -52,15 +52,6 @@ export default function Layout({ children }: LayoutProps) {
           })}
         </nav>
 
-        <div className="absolute bottom-6 left-6 right-6">
-          <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
-            <p className="text-xs text-slate-400 mb-2">System Status</p>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-sm text-slate-300">All Systems Online</span>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main Content */}

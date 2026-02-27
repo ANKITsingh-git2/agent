@@ -324,6 +324,8 @@ Edit `.env.local`:
 MONGODB_URI=mongodb://localhost:27017/genai-agent-orchestrator
 GROK_API_KEY=your_grok_api_key_here
 GROK_API_URL=https://api.x.ai/v1
+GROK_MODEL=grok-2-latest
+GROK_MODEL_FALLBACKS=grok-4,grok-3,grok-3-mini
 ```
 
 3. **Start MongoDB**

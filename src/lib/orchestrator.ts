@@ -1,7 +1,7 @@
-import { 
-  AgentConfig, 
-  AgentResponse, 
-  IntentType, 
+import {
+  AgentConfig,
+  AgentResponse,
+  IntentType,
   ActionType,
   FAQ,
   ToolConfig
@@ -95,7 +95,7 @@ export class AgentOrchestrator {
 
       // Step 5: Determine action and execute
       const action = this.determineAction(intent, confidence, agent);
-      
+
       if (action === 'tool_call') {
         return await this.handleToolCall(
           agentId,
@@ -141,7 +141,7 @@ export class AgentOrchestrator {
     agent: AgentConfig
   ): ActionType {
     // Tool-requiring intents
-    if (intent === 'order_status' || intent === 'create_ticket') {
+    if (intent === 'order_status' || intent === 'create_ticket' || intent === 'complaint') {
       return 'tool_call';
     }
 
@@ -167,10 +167,10 @@ export class AgentOrchestrator {
     totalStart: number,
     failureKey: string
   ): Promise<AgentResponse> {
-    
+
     // Extract tool parameters from message
     const toolParams = this.extractToolParameters(intent, message);
-    
+
     if (!toolParams.valid) {
       return this.createEscalationResponse(
         intent,
@@ -235,10 +235,10 @@ export class AgentOrchestrator {
 
     // Generate answer from tool result
     const answerStart = Date.now();
-    
+
     // Use templated response for safety
     let answer = hallucinationGuard.getTemplatedResponse(intent, toolExecution.result);
-    
+
     if (!answer) {
       // Generate with AI if no template
       const context = JSON.stringify(toolExecution.result);
@@ -312,12 +312,12 @@ export class AgentOrchestrator {
     intentLatency: number,
     totalStart: number
   ): Promise<AgentResponse> {
-    
+
     const answerStart = Date.now();
 
     // Try to find answer in FAQ
     const faqAnswer = await this.findFAQAnswer(agentId, message);
-    
+
     if (faqAnswer) {
       const cited = this.ensureBalancedCitation(faqAnswer, agent.safetyMode, 'faq');
       return {
@@ -343,10 +343,10 @@ export class AgentOrchestrator {
         intent,
         confidence,
         'No FAQ match in strict mode',
-        { 
-          intentClassification: intentLatency, 
-          answerGeneration: Date.now() - answerStart, 
-          total: Date.now() - totalStart 
+        {
+          intentClassification: intentLatency,
+          answerGeneration: Date.now() - answerStart,
+          total: Date.now() - totalStart
         }
       );
     }
@@ -387,14 +387,14 @@ export class AgentOrchestrator {
     intent: IntentType,
     message: string
   ): { valid: boolean; toolName?: string; args?: any; reason?: string } {
-    
+
     if (intent === 'order_status') {
       // Extract order ID from message
-      const orderIdMatch = message.match(/\b(\d{4,})\b/);
+      const orderIdMatch = message.match(/(\d{4,})/);
       if (!orderIdMatch) {
-        return { 
-          valid: false, 
-          reason: 'Please provide your order number' 
+        return {
+          valid: false,
+          reason: 'Please provide your order number'
         };
       }
       return {
@@ -404,11 +404,11 @@ export class AgentOrchestrator {
       };
     }
 
-    if (intent === 'create_ticket') {
+    if (intent === 'create_ticket' || intent === 'complaint') {
       // Extract category and description
-      const category = 'general'; // Could be enhanced with better extraction
+      const category = intent === 'complaint' ? 'complaint' : 'general';
       const description = message;
-      
+
       return {
         valid: true,
         toolName: 'create_ticket',
@@ -432,11 +432,11 @@ export class AgentOrchestrator {
 
       // Simple keyword matching (can be enhanced)
       const messageLower = message.toLowerCase();
-      
+
       for (const faq of faqs) {
         const questionLower = faq.question.toLowerCase();
         const keywords = questionLower.split(' ').filter(w => w.length > 3);
-        
+
         const matchCount = keywords.filter(k => messageLower.includes(k)).length;
         if (matchCount >= Math.ceil(keywords.length * 0.5)) {
           return faq.answer;
